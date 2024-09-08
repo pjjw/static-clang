@@ -39,7 +39,13 @@ DIST_FLAVORS = {
             "@llvm-project//llvm:llvm-libtool-darwin",
             "@llvm-project//llvm:llvm-nm",
             "@llvm-project//llvm:llvm-objcopy",
-        ] + props.get("extra_bins", []),
+        ] + props.get("extra_bins", []) + select({
+            "@platforms//os:linux": [
+                "@llvm-project//compiler-rt:config",
+                "@llvm-project//compiler-rt:profile",
+            ],
+            "//conditions:default": [],
+        }),
         attributes = pkg_attributes(
             mode = "0755",
         ),
