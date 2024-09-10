@@ -28,6 +28,17 @@ DIST_FLAVORS = {
     },
 }
 
+pkg_files(
+    name = "compiler-rt-lib",
+    srcs = ["@llvm-project//compiler-rt:profile"],
+    prefix = "lib/clang/18/lib/linux",
+    renames = select({
+        "@platforms//cpu:x86_64": {"@llvm-project//compiler-rt:profile": "libclang_rt.profile-x86_64.a"},
+        "@platforms//cpu:aarch64": {"@llvm-project//compiler-rt:profile": "libclang_rt.profile-aarch64.a"},
+    }),
+)
+
+
 [
     pkg_files(
         name = "bins" + suffix,
@@ -39,13 +50,7 @@ DIST_FLAVORS = {
             "@llvm-project//llvm:llvm-libtool-darwin",
             "@llvm-project//llvm:llvm-nm",
             "@llvm-project//llvm:llvm-objcopy",
-        ] + props.get("extra_bins", []) + select({
-            "@platforms//os:linux": [
-                "@llvm-project//compiler-rt:config",
-                "@llvm-project//compiler-rt:profile",
-            ],
-            "//conditions:default": [],
-        }),
+        ] + props.get("extra_bins", []),
         attributes = pkg_attributes(
             mode = "0755",
         ),
@@ -62,7 +67,12 @@ DIST_FLAVORS = {
             "//:builtin_headers_pkg_files",
             "@llvm-raw//:libcxx_include",
 	    "@llvm-raw//:libcxxabi_include",
-        ],
+	] + select({
+            "@platforms//os:linux": [
+                ":compiler-rt-lib",
+            ],
+            "//conditions:default": [],
+        }),
         empty_files = props.get("extra_empty_files", []),
         extension = ".tar.xz",
         symlinks = {
